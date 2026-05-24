@@ -1,0 +1,11 @@
+{
+  "/products/page": "app/products/page.js",
+  "/inventory/page": "app/inventory/page.js",
+  "/page": "app/page.js",
+  "/sales-orders/page": "app/sales-orders/page.js",
+  "/purchase-orders/page": "app/purchase-orders/page.js",
+  "/reports/page": "app/reports/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/vendors/page": "app/vendors/page.js",
+  "/customers/page": "app/customers/page.js"
+}
