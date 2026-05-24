@@ -1,74 +1,93 @@
-'use client';
+useEffect(() => {
+  // 1. Calculate Sales by Customer
+  const salesOrders = api.getSalesOrders();
+  const customers = api.getCustomers();
 
-import React, { useState, useEffect } from 'react';
-import { api } from '@/utils/api';
-import { TrendingUp, AlertTriangle, Building } from 'lucide-react';
-import { motion } from 'framer-motion';
+  const customerMap: Record<string, number> = {};
 
-export default function ReportsPage() {
-  const [customerSales, setCustomerSales] = useState<any[]>([]);
-  const [lowStock, setLowStock] = useState<any[]>([]);
-  const [warehouseValues, setWarehouseValues] = useState<any[]>([]);
+  salesOrders.forEach((o: any) => {
+    if (o.status === 'CONFIRMED') {
+      customerMap[o.customerId] =
+        (customerMap[o.customerId] || 0) + o.totalAmount;
+    }
+  });
 
-  useEffect(() => {
-    // 1. Calculate Sales by Customer
-    const salesOrders = api.getSalesOrders();
-    const customers = api.getCustomers();
-    
-    const customerMap: Record<string, number> = {};
-    salesOrders.forEach((o: any) => {
-      if (o.status === 'CONFIRMED') {
-        customerMap[o.customerId] = (customerMap[o.customerId] || 0) + o.totalAmount;
-      }
-    });
-
-    const salesList = customers.map((c: any) => ({
+  const salesList = customers
+    .map((c: any) => ({
       name: c.name,
       company: c.company || 'N/A',
-      totalSales: customerMap[c.id] || 0
-    })).sort((a: any, b: any) => b.totalSales - a.totalSales);
+      totalSales: customerMap[c.id] || 0,
+    }))
+    .sort((a: any, b: any) => b.totalSales - a.totalSales);
 
-    setCustomerSales(salesList);
+  setCustomerSales(salesList);
 
-    // 2. Calculate Warehouse Inventory Values
-    const inventory = api.getInventoryLevels();
-    const warehouses = api.getWarehouses();
+  // 2. Calculate Warehouse Inventory Values
+  const inventory = api.getInventoryLevels();
+  const warehouses = api.getWarehouses();
 
-    const warehouseMap: Record<string, { name: string; code: string; totalValue: number; totalQty: number }> = {};
-    warehouses.forEach((w: any) => {
-      warehouseMap[w.id] = { name: w.name, code: w.code, totalValue: 0, totalQty: 0 };
-    });
+  const warehouseMap: Record<
+    string,
+    {
+      name: string;
+      code: string;
+      totalValue: number;
+      totalQty: number;
+    }
+  > = {};
 
-    inventory.forEach((inv) => {
-      if (warehouseMap[inv.warehouseId]) {
-        const cost = inv.product?.costPrice || 0;
-        warehouseMap[inv.warehouseId].totalValue += inv.quantityOnHand * cost;
-        warehouseMap[inv.warehouseId].totalQty += inv.quantityOnHand;
-      }
-    });
+  warehouses.forEach((w: any) => {
+    warehouseMap[w.id] = {
+      name: w.name,
+      code: w.code,
+      totalValue: 0,
+      totalQty: 0,
+    };
+  });
 
-    setWarehouseValues(Object.values(warehouseMap));
+  inventory.forEach((inv: any) => {
+    if (warehouseMap[inv.warehouseId]) {
+      const cost = inv.product?.costPrice || 0;
 
-    // 3. Find Low Stock Items (quantityOnHand < reorderLevel)
-    const products = api.getProducts();
-    const lowStockList: any[] = [];
+      warehouseMap[inv.warehouseId].totalValue +=
+        inv.quantityOnHand * cost;
 
-    products.forEach((prod) => {
-      const prodInv = inventory.filter((inv) => inv.productId === prod.id);
-      const totalQty = prodInv.reduce((sum, item) => sum + item.quantityOnHand, 0);
-      const reorder = prod.reorderLevel || 10;
-      if (totalQty < reorder) {
-        lowStockList.push({
-          sku: prod.sku,
-          name: prod.name,
-          currentQty: totalQty,
-          reorderLevel: reorder,
-        });
-      }
-    });
+      warehouseMap[inv.warehouseId].totalQty += inv.quantityOnHand;
+    }
+  });
 
-    setLowStock(lowStockList);
-  }, []);
+  setWarehouseValues(Object.values(warehouseMap));
+
+  // 3. Find Low Stock Items
+  const products = api.getProducts();
+
+  const lowStockList: any[] = [];
+
+  products.forEach((prod: any) => {
+    const prodInv = inventory.filter(
+      (inv: any) => inv.productId === prod.id
+    );
+
+    const totalQty = prodInv.reduce(
+      (sum: number, item: any) =>
+        sum + item.quantityOnHand,
+      0
+    );
+
+    const reorder = prod.reorderLevel || 10;
+
+    if (totalQty < reorder) {
+      lowStockList.push({
+        sku: prod.sku,
+        name: prod.name,
+        currentQty: totalQty,
+        reorderLevel: reorder,
+      });
+    }
+  });
+
+  setLowStock(lowStockList);
+}, []);
 
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
