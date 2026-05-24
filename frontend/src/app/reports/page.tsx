@@ -35,7 +35,7 @@ export default function ReportsPage() {
     const warehouses = api.getWarehouses();
 
     const warehouseMap: Record<string, { name: string; code: string; totalValue: number; totalQty: number }> = {};
-    warehouses.forEach((w) => {
+    warehouses.forEach((w: any) => {
       warehouseMap[w.id] = { name: w.name, code: w.code, totalValue: 0, totalQty: 0 };
     });
 
