@@ -26,7 +26,7 @@ export default function ReportsPage() {
       name: c.name,
       company: c.company || 'N/A',
       totalSales: customerMap[c.id] || 0
-    })).sort((a, b) => b.totalSales - a.totalSales);
+    })).sort((a: any, b: any) => b.totalSales - a.totalSales);
 
     setCustomerSales(salesList);
 
