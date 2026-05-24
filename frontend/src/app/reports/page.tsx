@@ -22,7 +22,7 @@ export default function ReportsPage() {
       }
     });
 
-    const salesList = customers.map((c) => ({
+    const salesList = customers.map((c: any) => ({
       name: c.name,
       company: c.company || 'N/A',
       totalSales: customerMap[c.id] || 0
